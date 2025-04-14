@@ -48,6 +48,7 @@ patience: 20
 
 ## 결과
 
+<img width="1178" alt="스크린샷 2025-04-14 오전 9 51 56" src="https://github.com/user-attachments/assets/bea7ff8d-c8c8-49aa-89b0-a37e8b5eda7e" />
 
 - **Instance Segmentation > Object Detection**: 복잡한 배경·겹침 상황에서 더 안정적인 경계 추정  
 - 클래스 불균형으로 특정 클래스(예: 배터리 팩)에서 오차↑ → 언더샘플링·Focal Loss로 개선 가능  
