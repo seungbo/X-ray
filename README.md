@@ -36,11 +36,12 @@ img_size: 640
 batch: 16
 epochs: 100
 optimizer: SGD
-lr0: 0.01
-weight_decay: 5e‑4
 mosaic: 1.0
 mixup: 0.2
 patience: 20
+   .
+   .
+   .
 ```
 - **모니터링**: Weights & Biases(W&B)로 실시간 모니터링  
 
