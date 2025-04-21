@@ -32,16 +32,33 @@
 ## 실험 설정
 ```yaml
 # 핵심 하이퍼파라미터
-img_size: 640
-batch: 16
-epochs: 100
-optimizer: SGD
-mosaic: 1.0
-mixup: 0.2
-patience: 20
-   .
-   .
-   .
+from ultralytics import YOLO
+
+model = YOLO("yolo11s-seg.pt")
+
+train_results = model.train(
+    project="X-ray",
+    name="test",
+    data="data.yaml",
+    patience=20,
+    epochs=200,
+    save_period=10,
+    lr0=0.001, lrf=0.1,
+    optimizer="AdamW",
+    imgsz=768,
+    device=0,
+    batch=32,
+    # cache='disk',
+    hsv_h=0.005, hsv_s=0.3, hsv_v=0.2,
+    degrees=5.0, copy_paste=0.2,
+    mosaic=0.8,
+    auto_augment=None,
+    erasing=0.0,
+    freeze=12,
+    cos_lr=True,
+    mask_ratio=2,
+    plots=True,
+)
 ```
 - **모니터링**: Weights & Biases(W&B)로 실시간 모니터링  
 
