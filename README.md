@@ -32,10 +32,6 @@
 ## 실험 설정
 ```yaml
 # 핵심 하이퍼파라미터
-from ultralytics import YOLO
-
-model = YOLO("yolo11s-seg.pt")
-
 train_results = model.train(
     project="X-ray",
     name="test",
