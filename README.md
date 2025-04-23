@@ -70,7 +70,8 @@ train_results = model.train(
 ---
 
 ## 사용 방법
-
+`pip install lab
+pip install streamlit`
 
 
 ---
