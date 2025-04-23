@@ -31,20 +31,23 @@
 
 ## 실험 설정
 ```yaml
+# 1단계 학습
 # 핵심 하이퍼파라미터
 train_results = model.train(
     project="X-ray",
-    name="test",
+    name="X-ray-V1",
     data="data.yaml",
-    patience=20,
-    epochs=200,
-    save_period=10,
+    patience=10,
+    epochs=20,
+    warmup_epochs=3,
+    save_period=1,
     lr0=0.001, lrf=0.1,
     optimizer="AdamW",
     imgsz=768,
     device=0,
     batch=32,
-    # cache='disk',
+    workers=12,
+    close_mosaic=4,
     hsv_h=0.005, hsv_s=0.3, hsv_v=0.2,
     degrees=5.0, copy_paste=0.2,
     mosaic=0.8,
