@@ -87,7 +87,6 @@ train_results = model.train(
     freeze=None,
     overlap_mask=False,
     mask_ratio=2,
-
     save_period=5,
     plots=True,
     seed=42,
