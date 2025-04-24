@@ -30,7 +30,7 @@
 ---
 
 ## 실험 설정
-```yaml
+```python
 # 1단계 학습
 # 핵심 하이퍼파라미터
 train_results = model.train(
@@ -59,6 +59,43 @@ train_results = model.train(
     plots=True,
 )
 ```
+
+```python
+# 2단계 학습
+# 핵심 하이퍼파라미터
+train_results = model.train(
+    project="X-ray",
+    name="X-ray-V2",
+    data="data.yaml",
+    epochs=100,
+    patience=30,
+    warmup_epochs=5,
+    lr0=8e-5, lrf=0.02,
+    weight_decay=5e-4,
+    optimizer="AdamW",
+    cos_lr=True,
+    batch=8,
+    workers=12,
+    device=0,
+    mosaic=0.4,
+    close_mosaic=20,
+    multi_scale=True,
+    hsv_h=0.005, hsv_s=0.3, hsv_v=0.2,
+    degrees=5.0, copy_paste=0.2,
+    auto_augment=None,
+    erasing=0.0,
+    freeze=None,
+    overlap_mask=False,
+    mask_ratio=2,
+
+    save_period=5,
+    plots=True,
+    seed=42,
+    deterministic=False,
+)
+```
+
+
 - **모니터링**: Weights & Biases(W&B)로 실시간 모니터링  
 
 ---
@@ -76,6 +113,10 @@ train_results = model.train(
 `pip install ultralytics streamlit torch lab`
 
 
+## 웹 애플리케이션 실행 코드
+```bash
+streamlit run streamlit_inference.py "path/to/X-ray-main/model(Segmentation)/best"
+```
 ---
 
 ## 배운점
