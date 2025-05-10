@@ -15,6 +15,7 @@ import logging
 import pandas as pd
 import time
 import altair as alt
+import av
 
 from decouple import config
 
@@ -24,9 +25,44 @@ from ultralytics.utils.checks import check_requirements
 from ultralytics.utils.downloads import GITHUB_ASSETS_STEMS
 
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
 st.set_page_config(page_title="X-RayVision", layout="wide")
- 
+
+# RTC 설정
+RTC_CONFIGURATION = RTCConfiguration(
+    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+)
+
+class VideoProcessor(VideoTransformerBase):
+    def __init__(self, model, conf, iou, selected_ind):
+        self.model = model
+        self.conf = conf
+        self.iou = iou
+        self.selected_ind = selected_ind
+        self.result_data = None  # 결과 데이터를 저장할 변수
+        self.last_frame = None   # 원본 프레임 저장
+        self.processed_frame = None  # 처리된 프레임 저장
+
+    def recv(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        self.last_frame = img.copy()  # 원본 프레임 저장
+        # YOLO 모델로 프레임 처리
+        if self.model is not None:
+            results = self.model(img, conf=self.conf, iou=self.iou, classes=self.selected_ind)
+            self.result_data = results
+            self.processed_frame = results[0].plot()
+        else:
+            self.processed_frame = img
+        # 처리된 영상을 반환 (WebRTC 스트림용)
+        return av.VideoFrame.from_ndarray(self.processed_frame, format="bgr24")
+
+    def get_result(self):
+        return self.result_data
+    def get_last_frame(self):
+        return self.last_frame
+    def get_processed_frame(self):
+        return self.processed_frame
+
 # 공유 데이터 파일 경로 정의
 SHARED_DATA_FILE = "shared_data.json"
 
@@ -223,11 +259,147 @@ class Inference:
         self.configure()  # Configure the app
 
         # 카테고리 맵 정의를 올바른 위치로 이동
+        # category_map = {
+        #     "일반물품": ["Ratchet handle", "wallet", "glasses"],
+        #     "위해물품": ["Knife-F", "gun", "scissors", "Scissors-A"],
+        #     "정보저장매체": ["laptop", "phone", "tablet",]
+        # }
+
         category_map = {
-            "일반물품": ["Ratchet handle", "wallet", "glasses"],
-            "위해물품": ["Knife-F", "gun", "scissors", "Scissors-A"],
-            "정보저장매체": ["laptop", "phone", "tablet",]
+            "일반물품": [
+                "Adapter", "Auto-lead-leash", "Baseball-glove", "Battery", "Belt", "Bolt", "Boots",
+                "Bracelet", "CD-player", "Cable", "Calculator", "Candy", "Canvas-Bag", "Carabiner",
+                "Cat-sand", "Cell-phone-battery", "Chocolate", "Chopsticks", "Cleaning-brush",
+                "Climbing-irons", "Clothespin", "Clutch-bag", "Coffee-capsule", "Coin", "Comb",
+                "Compass", "Computer-parts", "Condiment-powder", "Container(Aluminum-A)",
+                "Container(Aluminum-C)", "Container(Aluminum-D)", "Container(Glass-A)",
+                "Container(Glass-B)", "Container(Glass-C)", "Container(Glass-D)", "Container(Glass-E)",
+                "Container(Plastic-A)", "Container(Plastic-B)", "Container(Plastic-C)",
+                "Container(Plastic-D)", "Container(Plastic-E)", "Container(Stainless-A)",
+                "Container(Stainless-B)", "Container(Stainless-C)", "Credit-Card", "Cup", "Cup-foods",
+                "Cushion(cosmetic)", "Deodorant", "Desiccant", "Desk-clock", "Detergent-powder",
+                "Diary", "Drafting", "Drone", "Drum", "Dumbbell", "E-cigarette", "Earphone",
+                "Electric-fan", "Electric-hair-dryer", "Electronic-dictionary", "Electronics",
+                "Eye-makeup-product", "Eyebrow-knife", "Feed", "Fist-driver", "Flashlight", "Fork",
+                "Frame", "Fruit-slicer", "Frying-pan", "Glasses", "Glasses-Case", "Glue-stick",
+                "Golf-ball", "Grain", "Hair-dye", "Hand-grip", "Handbag", "Handwarmer", "Hanger",
+                "Headset", "Helmet", "Hex-key(under-10cm)", "Hook", "Instant-Rice", "Iron", "Jelly",
+                "Joy-stick", "Kettle", "Key", "Key-Ring", "Keyboard", "Kids-shoes",
+                "LAGs-products(Aluminum-E)", "LAGs-products(Glass-E)", "LAGs-products(Plastic-E)",
+                "LAGs-products(Tube-E)", "LAGs-products(Vinyl-E)", "Ladle", "Lamp", "Lantern",
+                "Laptop-stand", "Laundry-ball", "Lens-case", "Level", "Lipstick", "Lock", "Lure",
+                "MP3-player", "Magnet", "Medicine", "Mike", "Mirror", "Mouse", "Multipurpose-knife",
+                "Multitap", "Nail", "Nail-clippers", "Nail-file", "Nail-nipper", "Necklace", "Nut",
+                "Opener", "Peeler", "Pen", "Percussion-instrument", "Phone-charger", "Plate", "Plug",
+                "Portable-battery", "Pot", "Powder", "Puncher", "Purifier", "Radios", "Ramen",
+                "Ratchet-handle", "Rattle", "Razor", "Reel", "Remocon", "Ring-metal", "Rolling-pin",
+                "Rope", "Router", "Scissors-C", "Scotch-tape", "Screw", "Sewing-box", "Sharpening-steel",
+                "Shaver", "Shoe-spatula", "Shower-head", "Slippers", "Small-ball", "Snack", "Sneakers",
+                "Snorkel", "Soap", "Soldering-iron", "Spatula", "Speaker", "Spoon", "Spring-note",
+                "Stamp", "Stapler", "Stapler-remover", "Straightener", "Strainer", "Sunstick",
+                "Swimming-goggles", "Syringes", "Tape", "Tape-cleaner", "Tape-measure", "Telescope",
+                "Test-kit", "Thermometer", "Tongs", "Tooth-brush", "ToothBrush-holder",
+                "Toothbrush-sterilizer", "Toy-mobile", "Toy-robot", "Toy-sword", "Tripod", "Trowel",
+                "Tweezers", "USB-HUB", "Umbrella", "Valve", "Wall-clock", "Wallet", "Watch", "Webcam",
+                "Weighing-scale", "Weight", "Whisk", "Wind-instruments"
+            ],
+            "위해물품": [
+                "Arrow-tip", "Awl", "Ax", "Baton-folding", "Big-ball", "Billiard-ball", "Bolt-cutter",
+                "Bow", "Bullet", "Butane-gas", "Butterfly-knife", "Buttstock", "Card-knife", "Chisel",
+                "Combination-Plier", "Crowbar", "Dart-pin-metal", "Drill", "Drill-bit(over-6cm)",
+                "Driver", "Electric-saw", "Electroshock-weapon", "Exploding-golf-balls", "Firecracker",
+                "Green-onion-slicer", "Grenade", "Hammer", "Handcuffs", "Hazardous-goods(metal)",
+                "Hex-key(over-10cm)", "Hoe", "Homi", "Ice-skates", "Karambit", "Kettlebell",
+                "Knife-A", "Knife-B", "Knife-C", "Knife-D", "Knife-E", "Knife-F", "Knife-G",
+                "Knife-blade", "Knuckle", "Kubotan", "LAGs-products(Aluminum-B)", "LAGs-products(Aluminum-C)",
+                "LAGs-products(Aluminum-D)", "LAGs-products(Glass-A)", "LAGs-products(Glass-B)",
+                "LAGs-products(Glass-C)", "LAGs-products(Glass-D)", "LAGs-products(Paper-A)",
+                "LAGs-products(Paper-B)", "LAGs-products(Paper-D)", "LAGs-products(Plastic-A)",
+                "LAGs-products(Plastic-B)", "LAGs-products(Plastic-C)", "LAGs-products(Plastic-D)",
+                "LAGs-products(Stainless-B)", "LAGs-products(Stainless-C)", "LAGs-products(Stainless-D)",
+                "LAGs-products(Tube-C)", "LAGs-products(Tube-D)", "LAGs-products(Vinyl-A)",
+                "LAGs-products(Vinyl-B)", "LAGs-products(Vinyl-C)", "LAGs-products(Vinyl-D)",
+                "Lighter", "Long-nose-plier", "Matches", "Magazine", "Monkey-wrench", "Multipurpose-knife",
+                "Nipper", "Nunchaku", "Offset-wrench", "Pipe-wrench", "Pistol", "Podger-ratcheting-spanners",
+                "Rifle", "Saw", "Saw-blade", "Scissors-A", "Scissors-E", "Scissors-F",
+                "Self-defense-spray", "Shovel", "Shuriken-metal", "Sickle", "Slingshot",
+                "Smoke-grenade", "Solid-fuel", "Spanner", "Speargun-tip", "Straight-razor-folding",
+                "Surgical-knife", "Tent-stake", "Torch", "Torch-lighter", "Vise-plier", "Zipo-lighter"
+            ],
+            "정보저장매체": [
+                "CD", "Camcorder", "Camera", "Film", "Floppy-disk", "Folder-phone", "Hard-disk", "LP",
+                "Laptop", "SD-card", "Smart-phone", "Tablet-pc", "USB", "Video(Cassette)-tape"
+            ]
         }
+
+        if self.source == "webcam":
+            self.warning_placeholder = self.st.empty()
+            row1 = self.st.columns(2)
+            row1[0].markdown("<h3 style='text-align: center;'>원본</h3>", unsafe_allow_html=True)
+            row1[1].markdown("<h3 style='text-align: center;'>결과</h3>", unsafe_allow_html=True)
+            self.org_frame = row1[0].empty()
+            self.ann_frame = row1[1].empty()
+            self.counts_placeholder.empty()
+            log_messages_buffer = []
+            cumulative_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
+
+            # webrtc_streamer를 즉시 실행 (내장 컨트롤 사용)
+            if "webrtc_ctx" not in self.st.session_state:
+                self.st.session_state["webrtc_ctx"] = None
+            self.st.session_state["webrtc_ctx"] = webrtc_streamer(
+                key="processed",
+                video_processor_factory=lambda: VideoProcessor(
+                    model=self.model,
+                    conf=self.conf,
+                    iou=self.iou,
+                    selected_ind=self.selected_ind,
+                ),
+                rtc_configuration=RTC_CONFIGURATION,
+                media_stream_constraints={"video": True, "audio": False},
+                async_processing=True,
+                video_html_attrs={"style": {"display": "none"}},
+            )
+            # 실시간 프레임 표시 및 예측 (내장 컨트롤 playing 상태에만 의존)
+            while self.st.session_state["webrtc_ctx"].state.playing:
+                if self.st.session_state["webrtc_ctx"].video_processor:
+                    last_frame = self.st.session_state["webrtc_ctx"].video_processor.get_last_frame()
+                    if last_frame is not None:
+                        self.org_frame.image(last_frame, channels="BGR")
+                    processed_frame = self.st.session_state["webrtc_ctx"].video_processor.get_processed_frame()
+                    if processed_frame is not None:
+                        self.ann_frame.image(processed_frame, channels="BGR")
+                    results = self.st.session_state["webrtc_ctx"].video_processor.get_result()
+                    if results:
+                        current_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
+                        hazard_detected = False
+                        for det in results[0].boxes:
+                            cls_id = int(det.cls.item())
+                            cls_name = self.model.names[cls_id]
+                            for cat, items in category_map.items():
+                                if cls_name in items:
+                                    current_counts[cat] += 1
+                                    if cat == "위해물품":
+                                        hazard_detected = True
+                                    break
+                        if hazard_detected:
+                            self.warning_placeholder.error("🚨 상태: 위해물품 감지됨!", icon="🔥")
+                        else:
+                            self.warning_placeholder.success("✅ 상태: 안전", icon="👍")
+                        shared_data = {
+                            'current_counts': current_counts,
+                            'cumulative_counts': cumulative_counts,
+                            'log_messages': log_messages_buffer
+                        }
+                        try:
+                            with open(SHARED_DATA_FILE, 'w') as f:
+                                json.dump(shared_data, f, indent=4)
+                        except Exception as e:
+                            LOGGER.error(f"Failed to write to {SHARED_DATA_FILE}: {e}")
+                time.sleep(0.01)
+            self.warning_placeholder.empty()
+            self.initialize_shared_data()
+            self.success_placeholder.success("Model loaded successfully!")
+            return
 
         if self.st.sidebar.button("Start"):
             # Start 버튼 클릭 시 "Model loaded successfully!" 메시지 숨기기
@@ -258,20 +430,78 @@ class Inference:
             is_webcam = self.source == "webcam"
             
             if is_webcam:
-                # 웹캠 모드의 경우 스트리밍 처리 로직 사용
-                cap = None
-                use_webcam_stream = True
+                # 세션 상태 초기화
+                if "webrtc_ctx" not in self.st.session_state:
+                    self.st.session_state["webrtc_ctx"] = None
+                
+                # 웹캠 모드일 때는 하나의 webrtc_streamer만 사용
+                self.st.session_state.webrtc_ctx = webrtc_streamer(
+                    key="processed",
+                    video_processor_factory=lambda: VideoProcessor(
+                        model=self.model,
+                        conf=self.conf,
+                        iou=self.iou,
+                        selected_ind=self.selected_ind,
+                    ),
+                    rtc_configuration=RTC_CONFIGURATION,
+                    media_stream_constraints={"video": True, "audio": False},
+                    async_processing=True,
+                )
+
+                # 웹캠 스트림이 활성화된 동안 계속 실행
+                while self.st.session_state.webrtc_ctx.state.playing:
+                    # 현재 프레임에서 감지된 객체 카운트
+                    current_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
+                    
+                    # 처리된 결과를 받아와서 상태 업데이트
+                    if self.st.session_state.webrtc_ctx.video_processor:
+                        results = self.st.session_state.webrtc_ctx.video_processor.get_result()
+                        if results:
+                            # 위해물품 감지 여부 확인
+                            hazard_detected = False
+                            for det in results[0].boxes:
+                                cls_id = int(det.cls.item())
+                                cls_name = self.model.names[cls_id]
+                                
+                                # 카테고리별 카운트 업데이트
+                                for cat, items in category_map.items():
+                                    if cls_name in items:
+                                        current_counts[cat] += 1
+                                        if cat == "위해물품":
+                                            hazard_detected = True
+                                        break
+                            
+                            # 위험물품 감지 상태 업데이트
+                            if hazard_detected:
+                                self.warning_placeholder.error("🚨 상태: 위해물품 감지됨!", icon="🔥")
+                            else:
+                                self.warning_placeholder.success("✅ 상태: 안전", icon="👍")
+
+                    # JSON 파일 업데이트
+                    shared_data = {
+                        'current_counts': current_counts,
+                        'cumulative_counts': cumulative_counts,
+                        'log_messages': log_messages_buffer
+                    }
+                    try:
+                        with open(SHARED_DATA_FILE, 'w') as f:
+                            json.dump(shared_data, f, indent=4)
+                    except Exception as e:
+                        LOGGER.error(f"Failed to write to {SHARED_DATA_FILE}: {e}")
+
+                    time.sleep(0.1)  # CPU 사용량 조절
+
+                # 웹캠 스트림 종료 시 정리
+                self.warning_placeholder.empty()
+                self.initialize_shared_data()
+                self.success_placeholder.success("Model loaded successfully!")
+                
             else:
                 # 비디오 파일 모드
                 cap = cv2.VideoCapture(self.vid_file_name)
                 if not cap.isOpened():
                     self.st.error("Could not open video source.")
                     return
-                use_webcam_stream = False
-
-            # 웹캠 스트리밍 재시작 버튼
-            if is_webcam:
-                refresh_webcam = self.st.sidebar.button("Refresh Camera")
 
             # 누적 카운트 초기화
             cumulative_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
@@ -291,28 +521,11 @@ class Inference:
             # 공유 데이터 저장을 위한 변수
             shared_data = DEFAULT_SHARED_DATA.copy() # 초기값 복사
 
-            while True:
-                # 웹캠 모드와 비디오 모드 분리 처리
-                if use_webcam_stream:
-                    # 웹캠 스트림 처리
-                    webcam_data = self.st.sidebar.camera_input("카메라 스트림", key=f"camera_{int(time.time())}")
-                    
-                    if webcam_data is None:
-                        if refresh_webcam:
-                            continue
-                        self.st.warning("카메라를 활성화해주세요.")
-                        break
-                        
-                    # 웹캠 이미지를 numpy 배열로 변환
-                    img_bytes = webcam_data.getvalue()
-                    frame = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
-                    success = True
-                else:
-                    # 비디오 파일 처리
-                    success, frame = cap.read()
-                    if not success:
-                        self.st.warning("Failed to read frame from video source.")
-                        break
+            while not is_webcam:
+                success, frame = cap.read()
+                if not success:
+                    self.st.warning("Failed to read frame from video source.")
+                    break
 
                 # Process frame with model (사용자 설정에 따라 트래킹 사용)
                 if use_tracking:
@@ -459,7 +672,7 @@ class Inference:
                 except Exception as e:
                     LOGGER.error(f"Failed to write to {SHARED_DATA_FILE}: {e}")
 
-                if stop_button or (not use_webcam_stream and not success):
+                if stop_button or (not success):
                     if cap is not None:
                         cap.release()  # Release the capture
                     self.warning_placeholder.empty() # 종료 시 상태 표시기 지우기
@@ -471,8 +684,7 @@ class Inference:
                 self.ann_frame.image(annotated_frame, channels="BGR")  # Display processed frame
 
                 # 너무 빠른 루프 방지 (30fps 기준)
-                if not use_webcam_stream:
-                    time.sleep(0.03)
+                time.sleep(0.03)
 
 if __name__ == "__main__":
     import sys  # Import the sys module for accessing command-line arguments
