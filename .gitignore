@@ -1,5 +1,8 @@
 Documents/
+shared_data.json
 
+# yolo11으로 시작해서 .pt으로 끝나는 파일 모두 무시
+yolo11*.pt
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,macos,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,macos,visualstudiocode

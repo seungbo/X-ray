@@ -114,12 +114,6 @@ train_results = model.train(
 
 ## 웹 애플리케이션 실행 코드
 ```bash
-streamlit run streamlit_inference.py "path/to/X-ray-main/model(Segmentation)/best"
+streamlit run streamlit_inference.py 
 ```
----
-
-## 배운점
-- 
--  
-
 ---
