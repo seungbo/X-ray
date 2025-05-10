@@ -116,14 +116,8 @@ class Inference:
                     out.write(g.read())  # Read bytes into file
                 self.vid_file_name = "ultralytics.mp4"
         elif self.source == "webcam":
-            self.st.sidebar.info("카메라 접근 권한을 허용해주세요.")
-            self.webcam_stream = self.st.sidebar.camera_input("카메라")
-            if self.webcam_stream is not None:
-                # 카메라 스트림을 받아와서 임시 파일로 저장
-                g = io.BytesIO(self.webcam_stream.getvalue())
-                with open("webcam_stream.jpg", "wb") as out:
-                    out.write(g.read())
-                self.vid_file_name = "webcam_stream.jpg"
+            # webcam 모드에서는 아무런 안내 문구나 카메라 입력창을 표시하지 않음
+            pass
 
     def configure(self):
         """Configure the model and load selected classes for inference."""
@@ -223,18 +217,6 @@ class Inference:
                         self.st.error("비밀번호가 틀렸습니다.")
             return  # 인증 전에는 inference 실행 안 함
 
-        # CSS for hiding/showing sidebar
-        hide_sidebar_style = """
-        <style>
-            [data-testid="stSidebar"] {display: none;}
-        </style>
-        """
-        show_sidebar_style = """
-        <style>
-            [data-testid="stSidebar"] {display: block;}
-        </style>
-        """
-        
         self.web_ui()  # Initialize the web interface
         self.sidebar()  # Create the sidebar
         self.source_upload()  # Upload the video source
@@ -250,7 +232,6 @@ class Inference:
         if self.st.sidebar.button("Start"):
             # Start 버튼 클릭 시 "Model loaded successfully!" 메시지 숨기기
             self.success_placeholder.empty() # type: ignore
-            self.st.markdown(hide_sidebar_style, unsafe_allow_html=True)
             
             # Start 버튼 클릭 시 공유 데이터 파일 초기화
             self.initialize_shared_data()
@@ -266,17 +247,11 @@ class Inference:
             self.org_frame = row1[0].empty()
             self.ann_frame = row1[1].empty()
             
-            # success_message = self.st.success("Model loaded successfully!")
+            # 버튼 영역: Stop 버튼을 왼쪽(원래 Dashboard 버튼 위치)에 배치
             btns = self.st.columns([1,1])
-
-            # Dashboard 버튼: 클릭 시 새 탭에서 대시보드 페이지 열기
-            if btns[0].button("Dashboard"):
-                # Open dashboard page in a new tab using JavaScript
-                self.st.markdown('<script>window.open("dashboard_inference", "_blank");</script>', unsafe_allow_html=True)
-            
+            stop_button = btns[0].button("Stop")
             log_messages_buffer = [] # 로컬 버퍼 사용
-
-            stop_button = btns[1].button("Stop")
+            # btns[1]은 비워둠 (추후 필요시 다른 버튼 배치 가능)
 
             self.counts_placeholder.empty()
             
@@ -489,7 +464,6 @@ class Inference:
                         cap.release()  # Release the capture
                     self.warning_placeholder.empty() # 종료 시 상태 표시기 지우기
                     self.initialize_shared_data()
-                    self.st.markdown(show_sidebar_style, unsafe_allow_html=True)
                     self.success_placeholder.success("Model loaded successfully!") # type: ignore
                     self.st.stop()  # Stop streamlit app
 
