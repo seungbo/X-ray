@@ -74,8 +74,8 @@ class Inference:
         self.st = st  # Reference to the Streamlit module
         self.source = None  # Video source selection (webcam or video file)
         self.enable_trk = False  # Flag to toggle object tracking
-        self.conf = 0.25  # Confidence threshold for detection
-        self.iou = 0.45  # Intersection-over-Union (IoU) threshold for non-maximum suppression
+        self.conf = 0.40  # Confidence threshold for detection
+        self.iou = 0.30  # Intersection-over-Union (IoU) threshold for non-maximum suppression
         self.org_frame = None  # Container for the original frame display
         self.ann_frame = None  # Container for the annotated frame display
         self.warning_placeholder = None # Placeholder for hazard warnings
