@@ -123,18 +123,18 @@ class Inference:
                 logo = "scan.png"
                 self.st.image(logo, width=150)
 
-        self.st.sidebar.title("User Configuration")  # Add elements to vertical setting menu
+        self.st.sidebar.title("사용자 구성")  # Add elements to vertical setting menu
         self.source = self.st.sidebar.selectbox(
-            "Video",
+            "영상 소스",
             ("webcam", "video"),
             index=None,                         # 초기 선택 없음
             placeholder="Choose an option",    # 안내 문구 표시 :contentReference[oaicite:0]{index=0}
         )
-        self.enable_trk = self.st.sidebar.radio("Enable Tracking", ("Yes", "No"))  # Enable object tracking
+        self.enable_trk = self.st.sidebar.radio("객체 추적 여부", ("Yes", "No"))  # Enable object tracking
         self.conf = float(
-            self.st.sidebar.slider("Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
+            self.st.sidebar.slider("신뢰도 임계값", 0.0, 1.0, self.conf, 0.01)
         )  # Slider for confidence
-        self.iou = float(self.st.sidebar.slider("IoU Threshold", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
+        self.iou = float(self.st.sidebar.slider("IoU 임계값", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
 
         col1, col2 = self.st.columns(2)  # Create two columns for displaying frames
         self.org_frame = col1.empty()  # Container for original frame
@@ -179,7 +179,7 @@ class Inference:
             available_models.insert(0, custom_model)
         # selected_model = self.st.sidebar.selectbox("Model", available_models)
         selected_model = self.st.sidebar.selectbox(
-            "Model",
+            "모델",
             available_models,
             index=None,                         # 초기 선택 없음
             placeholder="Choose an option",    # 안내 문구 표시 :contentReference[oaicite:1]{index=1}
@@ -211,7 +211,7 @@ class Inference:
         else:
             options = []
         selected_classes = self.st.sidebar.multiselect(
-            "Classes",
+            "객체 종류",
             options,
             default=[],
             placeholder="Choose an option",
@@ -249,6 +249,7 @@ class Inference:
                     if password == APP_PASSWORD:
                         self.st.session_state["authenticated"] = True
                         self.st.success("인증에 성공했습니다.")
+                        self.st.rerun()
                     else:
                         self.st.error("비밀번호가 틀렸습니다.")
             return  # 인증 전에는 inference 실행 안 함
@@ -515,6 +516,9 @@ class Inference:
             # 트래킹 ID 세트 초기화 (트래킹 사용 여부와 상관없이 항상 초기화)
             tracked_ids = set()
             
+            # 트래킹 ID별 최초 감지 시각 저장 (트래킹 사용 시)
+            track_id_first_seen = dict()  # 추가: 트래킹 ID별 최초 감지 시각
+            
             # 감지된 객체 정보 저장 딕셔너리 (트래킹 사용 여부와 상관없이 항상 초기화)
             detected_objects = {}  # 클래스별로 감지된 객체들의 위치와 크기 저장
             
@@ -545,6 +549,7 @@ class Inference:
                 
                 # 트래킹 사용하는 경우
                 if use_tracking and hasattr(results[0].boxes, 'id') and results[0].boxes.id is not None:
+                    now = time.time()  # 현재 시간
                     for i, det in enumerate(results[0].boxes):
                         track_id = int(det.id.item()) if det.id is not None else None
                         cls_id = int(det.cls.item())
@@ -569,13 +574,16 @@ class Inference:
                                 current_counts[cat] += 1
                                 break
                         
-                        # 트래킹 ID가 있고 이전에 카운트되지 않은 경우에만 누적 카운트 증가
-                        if track_id is not None and track_id not in tracked_ids:
-                            tracked_ids.add(track_id)
-                            for cat, items in category_map.items():
-                                if cls_name in items:
-                                    cumulative_counts[cat] += 1
-                                    break
+                        # 트래킹 ID가 있고 1초 이상 감지된 경우에만 누적 카운트 증가
+                        if track_id is not None:
+                            if track_id not in track_id_first_seen:
+                                track_id_first_seen[track_id] = now
+                            elif (track_id not in tracked_ids) and (now - track_id_first_seen[track_id] >= 1.0):
+                                tracked_ids.add(track_id)
+                                for cat, items in category_map.items():
+                                    if cls_name in items:
+                                        cumulative_counts[cat] += 1
+                                        break
                 else:
                     # 트래킹 사용하지 않는 경우
                     if results[0].boxes is not None:
