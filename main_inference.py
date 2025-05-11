@@ -10,11 +10,8 @@ import json
 from typing import Any
 
 import cv2
-import numpy as np
-import logging
 import pandas as pd
 import time
-import altair as alt
 import av
 
 from decouple import config
@@ -91,15 +88,25 @@ class Inference:
         self.model_path = None  # Model file path
         if self.temp_dict["model"] is not None:
             self.model_path = self.temp_dict["model"]
-
-        LOGGER.info(f"Ultralytics Solutions: ✅ {self.temp_dict}")
+            LOGGER.info(f"Ultralytics Solutions: ✅ {self.temp_dict}")
 
     def initialize_shared_data(self):
         """공유 JSON 파일을 기본값으로 초기화합니다."""
         try:
-            with open(SHARED_DATA_FILE, 'w') as f:
-                json.dump(DEFAULT_SHARED_DATA, f, indent=4)
-            LOGGER.info(f"Initialized {SHARED_DATA_FILE}")
+            need_init = True
+            if os.path.exists(SHARED_DATA_FILE):
+                with open(SHARED_DATA_FILE, 'r') as f:
+                    try:
+                        data = json.load(f)
+                        if data == DEFAULT_SHARED_DATA:
+                            need_init = False
+                    except Exception:
+                        pass
+            if need_init:
+                with open(SHARED_DATA_FILE, 'w') as f:
+                    json.dump(DEFAULT_SHARED_DATA, f, indent=4)
+                LOGGER.info(f"Initialized {SHARED_DATA_FILE}")
+                print("Initialized shared_data.json")  # 실제로 초기화될 때만 출력
         except Exception as e:
             LOGGER.error(f"Failed to initialize {SHARED_DATA_FILE}: {e}")
 
@@ -259,13 +266,6 @@ class Inference:
         self.source_upload()  # Upload the video source
         self.configure()  # Configure the app
 
-        # 카테고리 맵 정의를 올바른 위치로 이동
-        # category_map = {
-        #     "일반물품": ["Ratchet handle", "wallet", "glasses"],
-        #     "위해물품": ["Knife-F", "gun", "scissors", "Scissors-A"],
-        #     "정보저장매체": ["laptop", "phone", "tablet",]
-        # }
-
         category_map = {
             "일반물품": [
                 "Adapter", "Auto-lead-leash", "Baseball-glove", "Battery", "Belt", "Bolt", "Boots",
@@ -341,8 +341,6 @@ class Inference:
             self.org_frame = row1[0].empty()
             self.ann_frame = row1[1].empty()
             self.counts_placeholder.empty()
-            log_messages_buffer = []
-            cumulative_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
 
             # webrtc_streamer를 즉시 실행 (내장 컨트롤 사용)
             if "webrtc_ctx" not in self.st.session_state:
@@ -369,36 +367,8 @@ class Inference:
                     processed_frame = self.st.session_state["webrtc_ctx"].video_processor.get_processed_frame()
                     if processed_frame is not None:
                         self.ann_frame.image(processed_frame, channels="BGR")
-                    results = self.st.session_state["webrtc_ctx"].video_processor.get_result()
-                    if results:
-                        current_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
-                        hazard_detected = False
-                        for det in results[0].boxes:
-                            cls_id = int(det.cls.item())
-                            cls_name = self.model.names[cls_id]
-                            for cat, items in category_map.items():
-                                if cls_name in items:
-                                    current_counts[cat] += 1
-                                    if cat == "위해물품":
-                                        hazard_detected = True
-                                    break
-                        if hazard_detected:
-                            self.warning_placeholder.error("🚨 상태: 위해물품 감지됨!", icon="🔥")
-                        else:
-                            self.warning_placeholder.success("✅ 상태: 안전", icon="👍")
-                        shared_data = {
-                            'current_counts': current_counts,
-                            'cumulative_counts': cumulative_counts,
-                            'log_messages': log_messages_buffer
-                        }
-                        try:
-                            with open(SHARED_DATA_FILE, 'w') as f:
-                                json.dump(shared_data, f, indent=4)
-                        except Exception as e:
-                            LOGGER.error(f"Failed to write to {SHARED_DATA_FILE}: {e}")
                 time.sleep(0.01)
             self.warning_placeholder.empty()
-            self.initialize_shared_data()
             self.success_placeholder.success("Model loaded successfully!")
             return
 
@@ -451,54 +421,15 @@ class Inference:
 
                 # 웹캠 스트림이 활성화된 동안 계속 실행
                 while self.st.session_state.webrtc_ctx.state.playing:
-                    # 현재 프레임에서 감지된 객체 카운트
-                    current_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
-                    
-                    # 처리된 결과를 받아와서 상태 업데이트
-                    if self.st.session_state.webrtc_ctx.video_processor:
-                        results = self.st.session_state.webrtc_ctx.video_processor.get_result()
-                        if results:
-                            # 위해물품 감지 여부 확인
-                            hazard_detected = False
-                            for det in results[0].boxes:
-                                cls_id = int(det.cls.item())
-                                cls_name = self.model.names[cls_id]
-                                
-                                # 카테고리별 카운트 업데이트
-                                for cat, items in category_map.items():
-                                    if cls_name in items:
-                                        current_counts[cat] += 1
-                                        if cat == "위해물품":
-                                            hazard_detected = True
-                                        break
-                            
-                            # 위험물품 감지 상태 업데이트
-                            if hazard_detected:
-                                self.warning_placeholder.error("🚨 상태: 위해물품 감지됨!", icon="🔥")
-                            else:
-                                self.warning_placeholder.success("✅ 상태: 안전", icon="👍")
-
-                    # JSON 파일 업데이트
-                    shared_data = {
-                        'current_counts': current_counts,
-                        'cumulative_counts': cumulative_counts,
-                        'log_messages': log_messages_buffer
-                    }
-                    try:
-                        with open(SHARED_DATA_FILE, 'w') as f:
-                            json.dump(shared_data, f, indent=4)
-                    except Exception as e:
-                        LOGGER.error(f"Failed to write to {SHARED_DATA_FILE}: {e}")
-
                     time.sleep(0.1)  # CPU 사용량 조절
 
                 # 웹캠 스트림 종료 시 정리
                 self.warning_placeholder.empty()
-                self.initialize_shared_data()
                 self.success_placeholder.success("Model loaded successfully!")
                 
             else:
                 # 비디오 파일 모드
+                self.initialize_shared_data()  # Start 버튼 클릭 시 항상 초기화
                 cap = cv2.VideoCapture(self.vid_file_name)
                 if not cap.isOpened():
                     self.st.error("Could not open video source.")
@@ -656,8 +587,6 @@ class Inference:
                 })
                 cumulative_df = pd.DataFrame({
                     '카테고리': list(cumulative_counts.keys()),
-                    # 'count':    list(cumulative_counts.values())
-                # })
                     'count': list(cumulative_counts.values())
                 })
 
