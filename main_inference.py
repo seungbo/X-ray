@@ -170,13 +170,20 @@ class Inference:
         if os.path.isdir(model_dir):
             # collect raw filenames with extensions
             for fname in os.listdir(model_dir):
-                if fname.endswith((".pt", ".onnx")):
+                if fname.endswith((".pt", ".onnx")) and not fname.endswith("-obb.pt"):
                     local_models.append(os.path.splitext(fname)[0])
         # Combine local and GitHub asset models, sort alphabetically, and remove duplicates
         available_models = sorted(set(
-            local_models +
-            [x.replace("yolo", "YOLO") for x in GITHUB_ASSETS_STEMS if x.startswith("yolo11")]
+            name for name in (
+                local_models +
+                [x.replace("yolo", "YOLO") for x in GITHUB_ASSETS_STEMS if x.startswith("yolo11")]
+            )
+            if not name.lower().endswith("-obb")
         ), reverse=True)
+
+        # 영상 소스가 선택되지 않았으면 모델 선택 옵션 비활성화
+        if not self.source:
+            available_models = []
 
         # Prioritize a model passed via command-line
         if self.model_path:
@@ -189,7 +196,7 @@ class Inference:
             "모델",
             available_models,
             index=None,                         # 초기 선택 없음
-            placeholder="Choose an option",    # 안내 문구 표시 :contentReference[oaicite:1]{index=1}
+            placeholder="Choose an option",    # 안내 문구 표시
         )
         if selected_model:
             with self.st.spinner("Model is downloading..."):
@@ -214,7 +221,11 @@ class Inference:
 
         if selected_model:
             all_classes_option = "All Classes"
-            options = [all_classes_option] + class_names
+            # -pose로 끝나는 모델이면 All Classes 옵션 제거
+            if selected_model.lower().endswith("-pose"):
+                options = class_names
+            else:
+                options = [all_classes_option] + class_names
         else:
             options = []
         selected_classes = self.st.sidebar.multiselect(
@@ -342,6 +353,9 @@ class Inference:
             self.ann_frame = row1[1].empty()
             self.counts_placeholder.empty()
 
+            # Start 버튼 클릭 시 "Model loaded successfully!" 메시지 숨기기 (webcam 모드)
+            self.success_placeholder.empty()
+
             # webrtc_streamer를 즉시 실행 (내장 컨트롤 사용)
             if "webrtc_ctx" not in self.st.session_state:
                 self.st.session_state["webrtc_ctx"] = None
@@ -369,7 +383,8 @@ class Inference:
                         self.ann_frame.image(processed_frame, channels="BGR")
                 time.sleep(0.01)
             self.warning_placeholder.empty()
-            self.success_placeholder.success("Model loaded successfully!")
+            if self.model is not None:
+                self.success_placeholder.success("Model loaded successfully!")
             return
 
         if self.st.sidebar.button("Start"):
@@ -425,7 +440,8 @@ class Inference:
 
                 # 웹캠 스트림 종료 시 정리
                 self.warning_placeholder.empty()
-                self.success_placeholder.success("Model loaded successfully!")
+                if self.model is not None:
+                    self.success_placeholder.success("Model loaded successfully!")
                 
             else:
                 # 비디오 파일 모드
