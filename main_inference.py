@@ -2,7 +2,6 @@ import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 import torch
-torch.classes.__path__ = [os.path.join(torch.__path__[0], torch.classes.__file__)] 
 torch.classes.__path__ = []
 
 import io
@@ -253,25 +252,6 @@ class Inference:
     def inference(self):
         """Perform real-time object detection inference on video or webcam feed."""
 
-        # 비밀번호 확인 로직 추가
-        if "authenticated" not in self.st.session_state:
-            self.st.session_state["authenticated"] = False
-
-        if not self.st.session_state["authenticated"]:
-            self.st.title("🔐 보안 로그인")
-            with self.st.form("login_form"):
-                password = self.st.text_input("비밀번호를 입력하세요", type="password")
-                submitted = self.st.form_submit_button("접속하기")
-                if submitted:
-                    APP_PASSWORD = config("APP_PASSWORD")
-                    if password == APP_PASSWORD:
-                        self.st.session_state["authenticated"] = True
-                        self.st.success("인증에 성공했습니다.")
-                        self.st.rerun()
-                    else:
-                        self.st.error("비밀번호가 틀렸습니다.")
-            return  # 인증 전에는 inference 실행 안 함
-
         self.web_ui()  # Initialize the web interface
         self.sidebar()  # Create the sidebar
         self.source_upload()  # Upload the video source
@@ -280,63 +260,11 @@ class Inference:
         category_map = {
             "일반물품": [
                 "Adapter", "Auto-lead-leash", "Baseball-glove", "Battery", "Belt", "Bolt", "Boots",
-                "Bracelet", "CD-player", "Cable", "Calculator", "Candy", "Canvas-Bag", "Carabiner",
-                "Cat-sand", "Cell-phone-battery", "Chocolate", "Chopsticks", "Cleaning-brush",
-                "Climbing-irons", "Clothespin", "Clutch-bag", "Coffee-capsule", "Coin", "Comb",
-                "Compass", "Computer-parts", "Condiment-powder", "Container(Aluminum-A)",
-                "Container(Aluminum-C)", "Container(Aluminum-D)", "Container(Glass-A)",
-                "Container(Glass-B)", "Container(Glass-C)", "Container(Glass-D)", "Container(Glass-E)",
-                "Container(Plastic-A)", "Container(Plastic-B)", "Container(Plastic-C)",
-                "Container(Plastic-D)", "Container(Plastic-E)", "Container(Stainless-A)",
-                "Container(Stainless-B)", "Container(Stainless-C)", "Credit-Card", "Cup", "Cup-foods",
-                "Cushion(cosmetic)", "Deodorant", "Desiccant", "Desk-clock", "Detergent-powder",
-                "Diary", "Drafting", "Drone", "Drum", "Dumbbell", "E-cigarette", "Earphone",
-                "Electric-fan", "Electric-hair-dryer", "Electronic-dictionary", "Electronics",
-                "Eye-makeup-product", "Eyebrow-knife", "Feed", "Fist-driver", "Flashlight", "Fork",
-                "Frame", "Fruit-slicer", "Frying-pan", "Glasses", "Glasses-Case", "Glue-stick",
-                "Golf-ball", "Grain", "Hair-dye", "Hand-grip", "Handbag", "Handwarmer", "Hanger",
-                "Headset", "Helmet", "Hex-key(under-10cm)", "Hook", "Instant-Rice", "Iron", "Jelly",
-                "Joy-stick", "Kettle", "Key", "Key-Ring", "Keyboard", "Kids-shoes",
-                "LAGs-products(Aluminum-E)", "LAGs-products(Glass-E)", "LAGs-products(Plastic-E)",
-                "LAGs-products(Tube-E)", "LAGs-products(Vinyl-E)", "Ladle", "Lamp", "Lantern",
-                "Laptop-stand", "Laundry-ball", "Lens-case", "Level", "Lipstick", "Lock", "Lure",
-                "MP3-player", "Magnet", "Medicine", "Mike", "Mirror", "Mouse", "Multipurpose-knife",
-                "Multitap", "Nail", "Nail-clippers", "Nail-file", "Nail-nipper", "Necklace", "Nut",
-                "Opener", "Peeler", "Pen", "Percussion-instrument", "Phone-charger", "Plate", "Plug",
-                "Portable-battery", "Pot", "Powder", "Puncher", "Purifier", "Radios", "Ramen",
-                "Ratchet-handle", "Rattle", "Razor", "Reel", "Remocon", "Ring-metal", "Rolling-pin",
-                "Rope", "Router", "Scissors-C", "Scotch-tape", "Screw", "Sewing-box", "Sharpening-steel",
-                "Shaver", "Shoe-spatula", "Shower-head", "Slippers", "Small-ball", "Snack", "Sneakers",
-                "Snorkel", "Soap", "Soldering-iron", "Spatula", "Speaker", "Spoon", "Spring-note",
-                "Stamp", "Stapler", "Stapler-remover", "Straightener", "Strainer", "Sunstick",
-                "Swimming-goggles", "Syringes", "Tape", "Tape-cleaner", "Tape-measure", "Telescope",
-                "Test-kit", "Thermometer", "Tongs", "Tooth-brush", "ToothBrush-holder",
-                "Toothbrush-sterilizer", "Toy-mobile", "Toy-robot", "Toy-sword", "Tripod", "Trowel",
-                "Tweezers", "USB-HUB", "Umbrella", "Valve", "Wall-clock", "Wallet", "Watch", "Webcam",
-                "Weighing-scale", "Weight", "Whisk", "Wind-instruments"
+                "Bracelet", "CD-player", "Cable", "Calculator", "Candy", "Canvas-Bag", "Carabiner"
             ],
             "위해물품": [
                 "Arrow-tip", "Awl", "Ax", "Baton-folding", "Big-ball", "Billiard-ball", "Bolt-cutter",
-                "Bow", "Bullet", "Butane-gas", "Butterfly-knife", "Buttstock", "Card-knife", "Chisel",
-                "Combination-Plier", "Crowbar", "Dart-pin-metal", "Drill", "Drill-bit(over-6cm)",
-                "Driver", "Electric-saw", "Electroshock-weapon", "Exploding-golf-balls", "Firecracker",
-                "Green-onion-slicer", "Grenade", "Hammer", "Handcuffs", "Hazardous-goods(metal)",
-                "Hex-key(over-10cm)", "Hoe", "Homi", "Ice-skates", "Karambit", "Kettlebell",
-                "Knife-A", "Knife-B", "Knife-C", "Knife-D", "Knife-E", "Knife-F", "Knife-G",
-                "Knife-blade", "Knuckle", "Kubotan", "LAGs-products(Aluminum-B)", "LAGs-products(Aluminum-C)",
-                "LAGs-products(Aluminum-D)", "LAGs-products(Glass-A)", "LAGs-products(Glass-B)",
-                "LAGs-products(Glass-C)", "LAGs-products(Glass-D)", "LAGs-products(Paper-A)",
-                "LAGs-products(Paper-B)", "LAGs-products(Paper-D)", "LAGs-products(Plastic-A)",
-                "LAGs-products(Plastic-B)", "LAGs-products(Plastic-C)", "LAGs-products(Plastic-D)",
-                "LAGs-products(Stainless-B)", "LAGs-products(Stainless-C)", "LAGs-products(Stainless-D)",
-                "LAGs-products(Tube-C)", "LAGs-products(Tube-D)", "LAGs-products(Vinyl-A)",
-                "LAGs-products(Vinyl-B)", "LAGs-products(Vinyl-C)", "LAGs-products(Vinyl-D)",
-                "Lighter", "Long-nose-plier", "Matches", "Magazine", "Monkey-wrench", "Multipurpose-knife",
-                "Nipper", "Nunchaku", "Offset-wrench", "Pipe-wrench", "Pistol", "Podger-ratcheting-spanners",
-                "Rifle", "Saw", "Saw-blade", "Scissors-A", "Scissors-E", "Scissors-F",
-                "Self-defense-spray", "Shovel", "Shuriken-metal", "Sickle", "Slingshot",
-                "Smoke-grenade", "Solid-fuel", "Spanner", "Speargun-tip", "Straight-razor-folding",
-                "Surgical-knife", "Tent-stake", "Torch", "Torch-lighter", "Vise-plier", "Zipo-lighter"
+                "Bow", "Bullet", "Butane-gas", "Butterfly-knife", "Buttstock", "Card-knife", "Chisel"
             ],
             "정보저장매체": [
                 "CD", "Camcorder", "Camera", "Film", "Floppy-disk", "Folder-phone", "Hard-disk", "LP",
