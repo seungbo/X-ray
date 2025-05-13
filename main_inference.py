@@ -13,8 +13,6 @@ import pandas as pd
 import time
 import av
 
-from decouple import config
-
 from ultralytics import YOLO
 from ultralytics.utils import LOGGER
 from ultralytics.utils.checks import check_requirements
@@ -68,7 +66,6 @@ DEFAULT_SHARED_DATA = {'current_counts': {'일반물품': 0, '위해물품': 0, 
 class Inference:
     def __init__(self, **kwargs: Any):
         check_requirements("streamlit>=1.29.0")
-        import streamlit as st
 
         self.st = st  # Reference to the Streamlit module
         self.source = None  # Video source selection (webcam or video file)
@@ -272,57 +269,14 @@ class Inference:
             ]
         }
 
-        if self.source == "webcam":
-            self.warning_placeholder = self.st.empty()
-            row1 = self.st.columns(2)
-            row1[0].markdown("<h3 style='text-align: center;'>원본</h3>", unsafe_allow_html=True)
-            row1[1].markdown("<h3 style='text-align: center;'>결과</h3>", unsafe_allow_html=True)
-            self.org_frame = row1[0].empty()
-            self.ann_frame = row1[1].empty()
-            self.counts_placeholder.empty()
-
-            # Start 버튼 클릭 시 "Model loaded successfully!" 메시지 숨기기 (webcam 모드)
-            self.success_placeholder.empty()
-
-            # webrtc_streamer를 즉시 실행 (내장 컨트롤 사용)
-            if "webrtc_ctx" not in self.st.session_state:
-                self.st.session_state["webrtc_ctx"] = None
-            self.st.session_state["webrtc_ctx"] = webrtc_streamer(
-                key="processed",
-                video_processor_factory=lambda: VideoProcessor(
-                    model=self.model,
-                    conf=self.conf,
-                    iou=self.iou,
-                    selected_ind=self.selected_ind,
-                ),
-                rtc_configuration=RTC_CONFIGURATION,
-                media_stream_constraints={"video": True, "audio": False},
-                async_processing=True,
-                video_html_attrs={"style": {"display": "none"}},
-            )
-            # 실시간 프레임 표시 및 예측 (내장 컨트롤 playing 상태에만 의존)
-            while self.st.session_state["webrtc_ctx"].state.playing:
-                if self.st.session_state["webrtc_ctx"].video_processor:
-                    last_frame = self.st.session_state["webrtc_ctx"].video_processor.get_last_frame()
-                    if last_frame is not None:
-                        self.org_frame.image(last_frame, channels="BGR")
-                    processed_frame = self.st.session_state["webrtc_ctx"].video_processor.get_processed_frame()
-                    if processed_frame is not None:
-                        self.ann_frame.image(processed_frame, channels="BGR")
-                time.sleep(0.01)
-            self.warning_placeholder.empty()
-            if self.model is not None:
-                self.success_placeholder.success("Model loaded successfully!")
-            return
-
         if self.st.sidebar.button("Start"):
             # Start 버튼 클릭 시 "Model loaded successfully!" 메시지 숨기기
-            self.success_placeholder.empty() # type: ignore
+            self.success_placeholder.empty()
             
             # Start 버튼 클릭 시 공유 데이터 파일 초기화
             self.initialize_shared_data()
  
-            # 위해물품 경고 메시지를 표시할 위치 확보 (영상 컬럼 생성 전)
+            # 위해물품 경고 메시지를 표시할 위치 확보
             self.warning_placeholder = self.st.empty()
  
             row1 = self.st.columns(2)  # 상단 행 - 영상용
@@ -333,51 +287,22 @@ class Inference:
             self.org_frame = row1[0].empty()
             self.ann_frame = row1[1].empty()
             
-            # 버튼 영역: Stop 버튼을 왼쪽(원래 Dashboard 버튼 위치)에 배치
+            # 버튼 영역: Stop 버튼을 왼쪽에 배치
             btns = self.st.columns([1,1])
             stop_button = btns[0].button("Stop")
-            log_messages_buffer = [] # 로컬 버퍼 사용
-            # btns[1]은 비워둠 (추후 필요시 다른 버튼 배치 가능)
-
+            log_messages_buffer = []  # 로컬 버퍼 사용
+            
             self.counts_placeholder.empty()
             
-            is_webcam = self.source == "webcam"
-            
-            if is_webcam:
-                # 세션 상태 초기화
-                if "webrtc_ctx" not in self.st.session_state:
-                    self.st.session_state["webrtc_ctx"] = None
-                
-                # 웹캠 모드일 때는 하나의 webrtc_streamer만 사용
-                self.st.session_state.webrtc_ctx = webrtc_streamer(
-                    key="processed",
-                    video_processor_factory=lambda: VideoProcessor(
-                        model=self.model,
-                        conf=self.conf,
-                        iou=self.iou,
-                        selected_ind=self.selected_ind,
-                    ),
-                    rtc_configuration=RTC_CONFIGURATION,
-                    media_stream_constraints={"video": True, "audio": False},
-                    async_processing=True,
-                )
-
-                # 웹캠 스트림이 활성화된 동안 계속 실행
-                while self.st.session_state.webrtc_ctx.state.playing:
-                    time.sleep(0.1)  # CPU 사용량 조절
-
-                # 웹캠 스트림 종료 시 정리
-                self.warning_placeholder.empty()
-                if self.model is not None:
-                    self.success_placeholder.success("Model loaded successfully!")
-                
+            # 비디오 소스 설정
+            if self.source == "webcam":
+                cap = cv2.VideoCapture(0)  # 웹캠
             else:
-                # 비디오 파일 모드
-                self.initialize_shared_data()  # Start 버튼 클릭 시 항상 초기화
-                cap = cv2.VideoCapture(self.vid_file_name)
-                if not cap.isOpened():
-                    self.st.error("Could not open video source.")
-                    return
+                cap = cv2.VideoCapture(self.vid_file_name)  # 비디오 파일
+
+            if not cap.isOpened():
+                self.st.error("Could not open video source.")
+                return
 
             # 누적 카운트 초기화
             cumulative_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
@@ -392,21 +317,24 @@ class Inference:
             tracked_ids = set()
             
             # 트래킹 ID별 최초 감지 시각 저장 (트래킹 사용 시)
-            track_id_first_seen = dict()  # 추가: 트래킹 ID별 최초 감지 시각
+            track_id_first_seen = dict()
             
-            # 감지된 객체 정보 저장 딕셔너리 (트래킹 사용 여부와 상관없이 항상 초기화)
-            detected_objects = {}  # 클래스별로 감지된 객체들의 위치와 크기 저장
+            # 감지된 객체 정보 저장 딕셔너리
+            detected_objects = {}
             
             # 공유 데이터 저장을 위한 변수
-            shared_data = DEFAULT_SHARED_DATA.copy() # 초기값 복사
+            shared_data = DEFAULT_SHARED_DATA.copy()
 
-            while not is_webcam:
+            while True:
                 success, frame = cap.read()
                 if not success:
-                    self.st.warning("Failed to read frame from video source.")
-                    break
+                    if self.source == "webcam":
+                        continue  # 웹캠의 경우 다음 프레임 시도
+                    else:
+                        self.st.warning("Failed to read frame from video source.")
+                        break
 
-                # Process frame with model (사용자 설정에 따라 트래킹 사용)
+                # Process frame with model
                 if use_tracking:
                     results = self.model.track(
                         frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, persist=True
@@ -414,7 +342,7 @@ class Inference:
                 else:
                     results = self.model(frame, conf=self.conf, iou=self.iou, classes=self.selected_ind)
 
-                annotated_frame = results[0].plot()  # Add annotations on frame
+                annotated_frame = results[0].plot()
 
                 # 현재 프레임에서 위해물품 감지 여부 플래그
                 hazard_detected_in_frame = False
@@ -553,13 +481,12 @@ class Inference:
                 except Exception as e:
                     LOGGER.error(f"Failed to write to {SHARED_DATA_FILE}: {e}")
 
-                if stop_button or (not success):
-                    if cap is not None:
-                        cap.release()  # Release the capture
-                    self.warning_placeholder.empty() # 종료 시 상태 표시기 지우기
+                if stop_button:
+                    cap.release()  # Release the capture
+                    self.warning_placeholder.empty()  # 종료 시 상태 표시기 지우기
                     self.initialize_shared_data()
-                    self.success_placeholder.success("Model loaded successfully!") # type: ignore
-                    self.st.stop()  # Stop streamlit app
+                    self.success_placeholder.success("Model loaded successfully!")
+                    self.st.stop()
 
                 self.org_frame.image(frame, channels="BGR")  # Display original frame
                 self.ann_frame.image(annotated_frame, channels="BGR")  # Display processed frame
