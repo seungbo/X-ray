@@ -185,6 +185,13 @@ class Inference:
         if self.source == "video":
             available_models = sorted(set(local_models), reverse=True)
 
+        # webcam 모드일 때 models 폴더와 YOLO11n으로 시작하는 모델만 보이게 필터링
+        if self.source == "webcam":
+            available_models = [
+                m for m in available_models
+                if m in local_models or m.lower().startswith("yolo11n")
+            ]
+
         # Prioritize a model passed via command-line
         if self.model_path:
             custom_model = os.path.splitext(self.model_path)[0]
