@@ -484,6 +484,7 @@ class Inference:
                 if stop_button:
                     cap.release()  # Release the capture
                     self.warning_placeholder.empty()  # 종료 시 상태 표시기 지우기
+                    self.initialize_shared_data()
                     self.success_placeholder.success("Model loaded successfully!")
                     self.st.stop()
 
@@ -498,6 +499,7 @@ if __name__ == "__main__":
     model = sys.argv[1] if args > 1 else None  # Assign first argument as the model name if provided
     # Create an instance of the Inference class and run inference
     inference_instance = Inference(model=model)
-
+    # 서버가 처음 실행될 때 JSON 파일 초기화
+    inference_instance.initialize_shared_data()
     # 추론 및 웹 UI 시작
     inference_instance.inference()
