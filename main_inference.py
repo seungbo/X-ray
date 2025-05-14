@@ -234,13 +234,68 @@ class Inference:
 
         category_map = {
             "일반물품": [
-                "Adapter", "Auto-lead-leash", "Baseball-glove", "Battery", "Belt", "Bolt", "Boots"
+                "Adapter", "Auto-lead-leash", "Baseball-glove", "Battery", "Belt", "Bolt", "Boots",
+                "Bracelet", "CD-player", "Cable", "Calculator", "Candy", "Canvas-Bag", "Carabiner",
+                "Cat-sand", "Cell-phone-battery", "Chocolate", "Chopsticks", "Cleaning-brush",
+                "Climbing-irons", "Clothespin", "Clutch-bag", "Coffee-capsule", "Coin", "Comb",
+                "Compass", "Computer-parts", "Condiment-powder", "Container(Aluminum-A)",
+                "Container(Aluminum-C)", "Container(Aluminum-D)", "Container(Glass-A)",
+                "Container(Glass-B)", "Container(Glass-C)", "Container(Glass-D)", "Container(Glass-E)",
+                "Container(Plastic-A)", "Container(Plastic-B)", "Container(Plastic-C)",
+                "Container(Plastic-D)", "Container(Plastic-E)", "Container(Stainless-A)",
+                "Container(Stainless-B)", "Container(Stainless-C)", "Credit-Card", "Cup", "Cup-foods",
+                "Cushion(cosmetic)", "Deodorant", "Desiccant", "Desk-clock", "Detergent-powder",
+                "Diary", "Drafting", "Drone", "Drum", "Dumbbell", "E-cigarette", "Earphone",
+                "Electric-fan", "Electric-hair-dryer", "Electronic-dictionary", "Electronics",
+                "Eye-makeup-product", "Eyebrow-knife", "Feed", "Fist-driver", "Flashlight", "Fork",
+                "Frame", "Fruit-slicer", "Frying-pan", "Glasses", "Glasses-Case", "Glue-stick",
+                "Golf-ball", "Grain", "Hair-dye", "Hand-grip", "Handbag", "Handwarmer", "Hanger",
+                "Headset", "Helmet", "Hex-key(under-10cm)", "Hook", "Instant-Rice", "Iron", "Jelly",
+                "Joy-stick", "Kettle", "Key", "Key-Ring", "Keyboard", "Kids-shoes",
+                "LAGs-products(Aluminum-E)", "LAGs-products(Glass-E)", "LAGs-products(Plastic-E)",
+                "LAGs-products(Tube-E)", "LAGs-products(Vinyl-E)", "Ladle", "Lamp", "Lantern",
+                "Laptop-stand", "Laundry-ball", "Lens-case", "Level", "Lipstick", "Lock", "Lure",
+                "MP3-player", "Magnet", "Medicine", "Mike", "Mirror", "Mouse", "Multipurpose-knife",
+                "Multitap", "Nail", "Nail-clippers", "Nail-file", "Nail-nipper", "Necklace", "Nut",
+                "Opener", "Peeler", "Pen", "Percussion-instrument", "Phone-charger", "Plate", "Plug",
+                "Portable-battery", "Pot", "Powder", "Puncher", "Purifier", "Radios", "Ramen",
+                "Ratchet-handle", "Rattle", "Razor", "Reel", "Remocon", "Ring-metal", "Rolling-pin",
+                "Rope", "Router", "Scissors-C", "Scotch-tape", "Screw", "Sewing-box", "Sharpening-steel",
+                "Shaver", "Shoe-spatula", "Shower-head", "Slippers", "Small-ball", "Snack", "Sneakers",
+                "Snorkel", "Soap", "Soldering-iron", "Spatula", "Speaker", "Spoon", "Spring-note",
+                "Stamp", "Stapler", "Stapler-remover", "Straightener", "Strainer", "Sunstick",
+                "Swimming-goggles", "Syringes", "Tape", "Tape-cleaner", "Tape-measure", "Telescope",
+                "Test-kit", "Thermometer", "Tongs", "Tooth-brush", "ToothBrush-holder",
+                "Toothbrush-sterilizer", "Toy-mobile", "Toy-robot", "Toy-sword", "Tripod", "Trowel",
+                "Tweezers", "USB-HUB", "Umbrella", "Valve", "Wall-clock", "Wallet", "Watch", "Webcam",
+                "Weighing-scale", "Weight", "Whisk", "Wind-instruments"
             ],
             "위해물품": [
-                "Arrow-tip", "Awl", "Ax", "Baton-folding", "Big-ball", "Billiard-ball", "Bolt-cutter"
+                "Arrow-tip", "Awl", "Ax", "Baton-folding", "Big-ball", "Billiard-ball", "Bolt-cutter",
+                "Bow", "Bullet", "Butane-gas", "Butterfly-knife", "Buttstock", "Card-knife", "Chisel",
+                "Combination-Plier", "Crowbar", "Dart-pin-metal", "Drill", "Drill-bit(over-6cm)",
+                "Driver", "Electric-saw", "Electroshock-weapon", "Exploding-golf-balls", "Firecracker",
+                "Green-onion-slicer", "Grenade", "Hammer", "Handcuffs", "Hazardous-goods(metal)",
+                "Hex-key(over-10cm)", "Hoe", "Homi", "Ice-skates", "Karambit", "Kettlebell",
+                "Knife-A", "Knife-B", "Knife-C", "Knife-D", "Knife-E", "Knife-F", "Knife-G",
+                "Knife-blade", "Knuckle", "Kubotan", "LAGs-products(Aluminum-B)", "LAGs-products(Aluminum-C)",
+                "LAGs-products(Aluminum-D)", "LAGs-products(Glass-A)", "LAGs-products(Glass-B)",
+                "LAGs-products(Glass-C)", "LAGs-products(Glass-D)", "LAGs-products(Paper-A)",
+                "LAGs-products(Paper-B)", "LAGs-products(Paper-D)", "LAGs-products(Plastic-A)",
+                "LAGs-products(Plastic-B)", "LAGs-products(Plastic-C)", "LAGs-products(Plastic-D)",
+                "LAGs-products(Stainless-B)", "LAGs-products(Stainless-C)", "LAGs-products(Stainless-D)",
+                "LAGs-products(Tube-C)", "LAGs-products(Tube-D)", "LAGs-products(Vinyl-A)",
+                "LAGs-products(Vinyl-B)", "LAGs-products(Vinyl-C)", "LAGs-products(Vinyl-D)",
+                "Lighter", "Long-nose-plier", "Matches", "Magazine", "Monkey-wrench", "Multipurpose-knife",
+                "Nipper", "Nunchaku", "Offset-wrench", "Pipe-wrench", "Pistol", "Podger-ratcheting-spanners",
+                "Rifle", "Saw", "Saw-blade", "Scissors-A", "Scissors-E", "Scissors-F",
+                "Self-defense-spray", "Shovel", "Shuriken-metal", "Sickle", "Slingshot",
+                "Smoke-grenade", "Solid-fuel", "Spanner", "Speargun-tip", "Straight-razor-folding",
+                "Surgical-knife", "Tent-stake", "Torch", "Torch-lighter", "Vise-plier", "Zipo-lighter"
             ],
             "정보저장매체": [
-                "CD", "Camcorder", "Camera", "Film", "Floppy-disk", "Folder-phone", "Hard-disk", "LP"
+                "CD", "Camcorder", "Camera", "Film", "Floppy-disk", "Folder-phone", "Hard-disk", "LP",
+                "Laptop", "SD-card", "Smart-phone", "Tablet-pc", "USB", "Video(Cassette)-tape"
             ]
         }
 
@@ -285,19 +340,26 @@ class Inference:
             
             # 트래킹 사용 여부는 사용자 설정에 따름
             use_tracking = self.enable_trk == "Yes"
-            
+
             # 알림 보낸 트래킹 ID 저장용 세트 (트래킹 사용 시)
             warned_track_ids = set()
-            
+
             # 트래킹 ID 세트 초기화 (트래킹 사용 여부와 상관없이 항상 초기화)
-            tracked_ids = set()
-            
+            # tracked_ids = set() # 이 변수는 누적 카운트된 ID를 저장하도록 변경
+            counted_track_ids = set() # 누적 카운트가 완료된 트래킹 ID 저장
+
             # 트래킹 ID별 최초 감지 시각 저장 (트래킹 사용 시)
             track_id_first_seen = dict()
-            
-            # 감지된 객체 정보 저장 딕셔너리
-            detected_objects = {}
-            
+            # 트래킹 ID별 마지막 감지 시각 저장 (연속성 확인용)
+            track_id_last_seen = dict()
+            # 트래킹 ID별 감지된 프레임 수 또는 연속 감지 카운트 (더 정확한 연속성 판단)
+            track_id_continuous_frames = dict()
+            # 최소 연속 감지 프레임 수 (예: 1초에 해당하는 프레임 수)
+            MIN_CONTINUOUS_FRAMES = int(cap.get(cv2.CAP_PROP_FPS) * 1.0) if cap.get(cv2.CAP_PROP_FPS) > 0 else 30 # 최소 30프레임 또는 1초 분량
+
+            # 감지된 객체 정보 저장 딕셔너리 (트래킹 미사용 시에만 사용)
+            # detected_objects = {} # 트래킹 사용 시에는 필요 없음
+
             # 공유 데이터 저장을 위한 변수
             shared_data = DEFAULT_SHARED_DATA.copy()
 
@@ -317,14 +379,11 @@ class Inference:
                 # Process frame with model
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 with torch.no_grad():
-                    if use_tracking:
-                        results = self.model.track(
-                            frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, persist=True, device=device
-                        )
-                    else:
-                        results = self.model(
-                            frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, device=device
-                        )
+                    # 트래킹 사용 시 persist=True 유지
+                    results = self.model.track(
+                        frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, persist=True, device=device
+                    )
+
                 annotated_frame = results[0].plot()
 
                 # 현재 프레임에서 위해물품 감지 여부 플래그
@@ -332,109 +391,67 @@ class Inference:
 
                 # 현재 프레임에서 감지된 객체 카운트
                 current_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
-                
+
+                # 현재 프레임에서 감지된 트래킹 ID 목록
+                current_frame_track_ids = set()
+
                 # 트래킹 사용하는 경우
-                if use_tracking and hasattr(results[0].boxes, 'id') and results[0].boxes.id is not None:
+                if hasattr(results[0].boxes, 'id') and results[0].boxes.id is not None:
                     now = time.time()  # 현재 시간
-                    for i, det in enumerate(results[0].boxes):
+                    for det in results[0].boxes:
                         track_id = int(det.id.item()) if det.id is not None else None
                         cls_id = int(det.cls.item())
                         cls_name = self.model.names[cls_id]
-                        
-                        # 로그 메시지 생성 및 저장
-                        log_msg = f"탐지: {cls_name} (신뢰도: {det.conf.item():.2f})"
-                        LOGGER.info(log_msg)
 
-                        log_messages_buffer.append(log_msg)
-                        log_messages_buffer = log_messages_buffer[-10:] # 최신 10개 유지
-
-                        # 위해물품 카테고리 확인 및 중복 알림 방지
-                        if any(cls_name in items for cat, items in category_map.items() if cat == "위해물품"):
-                            if track_id is not None and track_id not in warned_track_ids:
-                                warned_track_ids.add(track_id) # 알림 보낸 ID 기록
-                            hazard_detected_in_frame = True # 위해물품 감지 플래그 설정
-
-                        # 현재 프레임 카운트 업데이트
-                        for cat, items in category_map.items():
-                            if cls_name in items:
-                                current_counts[cat] += 1
-                                break
-                        
-                        # 트래킹 ID가 있고 1초 이상 감지된 경우에만 누적 카운트 증가
                         if track_id is not None:
+                            current_frame_track_ids.add(track_id)
+
+                            # 최초 감지 시각 기록
                             if track_id not in track_id_first_seen:
                                 track_id_first_seen[track_id] = now
-                            elif (track_id not in tracked_ids) and (now - track_id_first_seen[track_id] >= 1.0):
-                                tracked_ids.add(track_id)
-                                for cat, items in category_map.items():
-                                    if cls_name in items:
-                                        cumulative_counts[cat] += 1
-                                        break
-                else:
-                    # 트래킹 사용하지 않는 경우
-                    if results[0].boxes is not None:
-                        for det in results[0].boxes:
-                            cls_id = int(det.cls.item())
-                            cls_name = self.model.names[cls_id]
-                            box = det.xyxy.cpu().numpy()[0]  # xyxy 형식의 바운딩 박스
+                                track_id_continuous_frames[track_id] = 0 # 최초 감지 시 연속 프레임 카운트 초기화
 
-                            # 로그 메시지 생성 및 저장 (트래킹 미사용 시)
-                            log_msg = f"탐지: {cls_name} (신뢰도: {det.conf.item():.2f})"
+                            # 마지막 감지 시각 업데이트 및 연속 프레임 카운트 증가
+                            track_id_last_seen[track_id] = now
+                            track_id_continuous_frames[track_id] += 1
+
+
+                            # 로그 메시지 생성 및 저장
+                            log_msg = f"탐지: {cls_name} (ID: {track_id}, 신뢰도: {det.conf.item():.2f})"
                             LOGGER.info(log_msg)
-                        
+
                             log_messages_buffer.append(log_msg)
                             log_messages_buffer = log_messages_buffer[-10:] # 최신 10개 유지
 
-                            # 위해물품 카테고리 확인 (트래킹 미사용 시, new_object 조건은 아래에서 확인)
-                            is_hazard = any(cls_name in items for cat, items in category_map.items() if cat == "위해물품")
+                            # 위해물품 카테고리 확인 및 중복 알림 방지
+                            if any(cls_name in items for cat, items in category_map.items() if cat == "위해물품"):
+                                if track_id not in warned_track_ids:
+                                    self.warning_placeholder.error(f"🚨 상태: 위해물품 감지됨! (ID: {track_id})", icon="🔥")
+                                    warned_track_ids.add(track_id) # 알림 보낸 ID 기록
+                                hazard_detected_in_frame = True # 위해물품 감지 플래그 설정
 
-                            x1, y1, x2, y2 = box
-                            
-                            # 객체 정보 생성 (클래스 ID, 위치, 크기)
-                            box_center = ((x1 + x2) / 2, (y1 + y2) / 2)
-                            box_size = ((x2 - x1), (y2 - y1))
-                            obj_info = (cls_id, box_center, box_size)
-                            
                             # 현재 프레임 카운트 업데이트
-
                             for cat, items in category_map.items():
                                 if cls_name in items:
-                                    # cumulative_counts[cat] += 1
                                     current_counts[cat] += 1
                                     break
-                            # 이 클래스의 객체 정보가 없으면 딕셔너리 초기화
-                            if cls_name not in detected_objects:
-                                detected_objects[cls_name] = []
-                                # 이 클래스가 처음 감지된 경우 누적 카운트 증가
+
+                            # 누적 카운트 증가 조건 강화:
+                            # 1. 아직 누적 카운트되지 않은 ID이고
+                            # 2. 최소 연속 감지 프레임 수를 만족하는 경우
+                            if track_id not in counted_track_ids and track_id_continuous_frames[track_id] >= MIN_CONTINUOUS_FRAMES:
+                                counted_track_ids.add(track_id) # 누적 카운트된 ID로 기록
                                 for cat, items in category_map.items():
                                     if cls_name in items:
-                                        cumulative_counts[cat] += 1
+                                        cumulative_counts[cat] += 1 # 누적 카운트 증가
+                                        LOGGER.info(f"누적 카운트 증가: {cat} ({cumulative_counts[cat]}) - 객체 ID: {track_id}")
                                         break
-                            
-                            # 기존에 감지된 유사한 객체가 있는지 확인
-                            new_object = True
-                            if cls_name in detected_objects: # Ensure key exists before iterating
-                                for stored_obj in detected_objects[cls_name]:
-                                    stored_cls_id, stored_center, stored_size = stored_obj
-                                    
-                                    distance = ((box_center[0] - stored_center[0])**2 + 
-                                            (box_center[1] - stored_center[1])**2)**0.5
-                                    
-                                    size_ratio_w = box_size[0] / stored_size[0] if stored_size[0] > 0 else float('inf')
-                                    size_ratio_h = box_size[1] / stored_size[1] if stored_size[1] > 0 else float('inf')
-                                    
-                                    if (distance < min(box_size[0], box_size[1]) * 0.5 and
-                                        0.5 <= size_ratio_w <= 2.0 and
-                                        0.5 <= size_ratio_h <= 2.0):
-                                        new_object = False
-                                        break
-                            
-                            if new_object:
-                                if cls_name not in detected_objects: # Ensure list is initialized
-                                     detected_objects[cls_name] = []
-                                detected_objects[cls_name].append(obj_info)
-                                if is_hazard:
-                                    hazard_detected_in_frame = True
+
+                # 현재 프레임에서 감지되지 않은 트래킹 ID의 연속 감지 카운트 초기화
+                # (이전 프레임에는 있었지만 현재 프레임에 없는 객체)
+                for track_id in list(track_id_continuous_frames.keys()):
+                    if track_id not in current_frame_track_ids:
+                        track_id_continuous_frames[track_id] = 0 # 연속성 끊김으로 판단하여 카운트 초기화
 
                 current_df = pd.DataFrame({
                     '카테고리': list(current_counts.keys()), 
@@ -467,7 +484,6 @@ class Inference:
                 if stop_button:
                     cap.release()  # Release the capture
                     self.warning_placeholder.empty()  # 종료 시 상태 표시기 지우기
-                    self.initialize_shared_data()
                     self.success_placeholder.success("Model loaded successfully!")
                     self.st.stop()
 
@@ -482,9 +498,6 @@ if __name__ == "__main__":
     model = sys.argv[1] if args > 1 else None  # Assign first argument as the model name if provided
     # Create an instance of the Inference class and run inference
     inference_instance = Inference(model=model)
-
-    # 서버가 처음 실행될 때 JSON 파일 초기화
-    inference_instance.initialize_shared_data()
 
     # 추론 및 웹 UI 시작
     inference_instance.inference()
