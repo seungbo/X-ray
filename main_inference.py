@@ -181,6 +181,10 @@ class Inference:
         if not self.source:
             available_models = []
 
+        # video 모드일 때 models 폴더에 있는 항목만 남기고 나머지는 숨김 처리
+        if self.source == "video":
+            available_models = sorted(set(local_models), reverse=True)
+
         # Prioritize a model passed via command-line
         if self.model_path:
             custom_model = os.path.splitext(self.model_path)[0]
@@ -351,6 +355,7 @@ class Inference:
                 cap = cv2.VideoCapture(0)  # 웹캠
             else:
                 cap = cv2.VideoCapture(self.vid_file_name)  # 비디오 파일
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # 버퍼 최소화 (실시간성 향상)
 
             if not cap.isOpened():
                 self.st.error("Could not open video source.")
@@ -387,13 +392,16 @@ class Inference:
                         break
 
                 # Process frame with model
-                if use_tracking:
-                    results = self.model.track(
-                        frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, persist=True
-                    )
-                else:
-                    results = self.model(frame, conf=self.conf, iou=self.iou, classes=self.selected_ind)
-
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                with torch.no_grad():
+                    if use_tracking:
+                        results = self.model.track(
+                            frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, persist=True, device=device
+                        )
+                    else:
+                        results = self.model(
+                            frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, device=device
+                        )
                 annotated_frame = results[0].plot()
 
                 # 현재 프레임에서 위해물품 감지 여부 플래그
@@ -542,9 +550,6 @@ class Inference:
 
                 self.org_frame.image(frame, channels="BGR")  # Display original frame
                 self.ann_frame.image(annotated_frame, channels="BGR")  # Display processed frame
-
-                # 너무 빠른 루프 방지 (30fps 기준)
-                time.sleep(0.03)
 
 if __name__ == "__main__":
     import sys  # Import the sys module for accessing command-line arguments
