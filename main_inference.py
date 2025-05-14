@@ -260,6 +260,10 @@ class Inference:
     def inference(self):
         """Perform real-time object detection inference on video or webcam feed."""
 
+        def flip_frame(frame):
+            """프레임을 좌우 반전시키는 함수"""
+            return cv2.flip(frame, 1)
+
         self.web_ui()  # Initialize the web interface
         self.sidebar()  # Create the sidebar
         self.source_upload()  # Upload the video source
@@ -397,6 +401,10 @@ class Inference:
                     else:
                         self.st.warning("Failed to read frame from video source.")
                         break
+
+                # 웹캠 모드일 때만 프레임 반전
+                if self.source == "webcam":
+                    frame = flip_frame(frame)
 
                 # Process frame with model
                 device = "cuda" if torch.cuda.is_available() else "cpu"
