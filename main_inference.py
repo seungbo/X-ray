@@ -11,7 +11,6 @@ from typing import Any
 import cv2
 import pandas as pd
 import time
-import av
 
 from ultralytics import YOLO
 from ultralytics.utils import LOGGER
@@ -19,43 +18,7 @@ from ultralytics.utils.checks import check_requirements
 from ultralytics.utils.downloads import GITHUB_ASSETS_STEMS
 
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
 st.set_page_config(page_title="X-RayVision", layout="wide")
-
-# RTC 설정
-RTC_CONFIGURATION = RTCConfiguration(
-    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-)
-
-class VideoProcessor(VideoTransformerBase):
-    def __init__(self, model, conf, iou, selected_ind):
-        self.model = model
-        self.conf = conf
-        self.iou = iou
-        self.selected_ind = selected_ind
-        self.result_data = None  # 결과 데이터를 저장할 변수
-        self.last_frame = None   # 원본 프레임 저장
-        self.processed_frame = None  # 처리된 프레임 저장
-
-    def recv(self, frame):
-        img = frame.to_ndarray(format="bgr24")
-        self.last_frame = img.copy()  # 원본 프레임 저장
-        # YOLO 모델로 프레임 처리
-        if self.model is not None:
-            results = self.model(img, conf=self.conf, iou=self.iou, classes=self.selected_ind)
-            self.result_data = results
-            self.processed_frame = results[0].plot()
-        else:
-            self.processed_frame = img
-        # 처리된 영상을 반환 (WebRTC 스트림용)
-        return av.VideoFrame.from_ndarray(self.processed_frame, format="bgr24")
-
-    def get_result(self):
-        return self.result_data
-    def get_last_frame(self):
-        return self.last_frame
-    def get_processed_frame(self):
-        return self.processed_frame
 
 # 공유 데이터 파일 경로 정의
 SHARED_DATA_FILE = "shared_data.json"
@@ -271,68 +234,13 @@ class Inference:
 
         category_map = {
             "일반물품": [
-                "Adapter", "Auto-lead-leash", "Baseball-glove", "Battery", "Belt", "Bolt", "Boots",
-                "Bracelet", "CD-player", "Cable", "Calculator", "Candy", "Canvas-Bag", "Carabiner",
-                "Cat-sand", "Cell-phone-battery", "Chocolate", "Chopsticks", "Cleaning-brush",
-                "Climbing-irons", "Clothespin", "Clutch-bag", "Coffee-capsule", "Coin", "Comb",
-                "Compass", "Computer-parts", "Condiment-powder", "Container(Aluminum-A)",
-                "Container(Aluminum-C)", "Container(Aluminum-D)", "Container(Glass-A)",
-                "Container(Glass-B)", "Container(Glass-C)", "Container(Glass-D)", "Container(Glass-E)",
-                "Container(Plastic-A)", "Container(Plastic-B)", "Container(Plastic-C)",
-                "Container(Plastic-D)", "Container(Plastic-E)", "Container(Stainless-A)",
-                "Container(Stainless-B)", "Container(Stainless-C)", "Credit-Card", "Cup", "Cup-foods",
-                "Cushion(cosmetic)", "Deodorant", "Desiccant", "Desk-clock", "Detergent-powder",
-                "Diary", "Drafting", "Drone", "Drum", "Dumbbell", "E-cigarette", "Earphone",
-                "Electric-fan", "Electric-hair-dryer", "Electronic-dictionary", "Electronics",
-                "Eye-makeup-product", "Eyebrow-knife", "Feed", "Fist-driver", "Flashlight", "Fork",
-                "Frame", "Fruit-slicer", "Frying-pan", "Glasses", "Glasses-Case", "Glue-stick",
-                "Golf-ball", "Grain", "Hair-dye", "Hand-grip", "Handbag", "Handwarmer", "Hanger",
-                "Headset", "Helmet", "Hex-key(under-10cm)", "Hook", "Instant-Rice", "Iron", "Jelly",
-                "Joy-stick", "Kettle", "Key", "Key-Ring", "Keyboard", "Kids-shoes",
-                "LAGs-products(Aluminum-E)", "LAGs-products(Glass-E)", "LAGs-products(Plastic-E)",
-                "LAGs-products(Tube-E)", "LAGs-products(Vinyl-E)", "Ladle", "Lamp", "Lantern",
-                "Laptop-stand", "Laundry-ball", "Lens-case", "Level", "Lipstick", "Lock", "Lure",
-                "MP3-player", "Magnet", "Medicine", "Mike", "Mirror", "Mouse", "Multipurpose-knife",
-                "Multitap", "Nail", "Nail-clippers", "Nail-file", "Nail-nipper", "Necklace", "Nut",
-                "Opener", "Peeler", "Pen", "Percussion-instrument", "Phone-charger", "Plate", "Plug",
-                "Portable-battery", "Pot", "Powder", "Puncher", "Purifier", "Radios", "Ramen",
-                "Ratchet-handle", "Rattle", "Razor", "Reel", "Remocon", "Ring-metal", "Rolling-pin",
-                "Rope", "Router", "Scissors-C", "Scotch-tape", "Screw", "Sewing-box", "Sharpening-steel",
-                "Shaver", "Shoe-spatula", "Shower-head", "Slippers", "Small-ball", "Snack", "Sneakers",
-                "Snorkel", "Soap", "Soldering-iron", "Spatula", "Speaker", "Spoon", "Spring-note",
-                "Stamp", "Stapler", "Stapler-remover", "Straightener", "Strainer", "Sunstick",
-                "Swimming-goggles", "Syringes", "Tape", "Tape-cleaner", "Tape-measure", "Telescope",
-                "Test-kit", "Thermometer", "Tongs", "Tooth-brush", "ToothBrush-holder",
-                "Toothbrush-sterilizer", "Toy-mobile", "Toy-robot", "Toy-sword", "Tripod", "Trowel",
-                "Tweezers", "USB-HUB", "Umbrella", "Valve", "Wall-clock", "Wallet", "Watch", "Webcam",
-                "Weighing-scale", "Weight", "Whisk", "Wind-instruments"
+                "Adapter", "Auto-lead-leash", "Baseball-glove", "Battery", "Belt", "Bolt", "Boots"
             ],
             "위해물품": [
-                "Arrow-tip", "Awl", "Ax", "Baton-folding", "Big-ball", "Billiard-ball", "Bolt-cutter",
-                "Bow", "Bullet", "Butane-gas", "Butterfly-knife", "Buttstock", "Card-knife", "Chisel",
-                "Combination-Plier", "Crowbar", "Dart-pin-metal", "Drill", "Drill-bit(over-6cm)",
-                "Driver", "Electric-saw", "Electroshock-weapon", "Exploding-golf-balls", "Firecracker",
-                "Green-onion-slicer", "Grenade", "Hammer", "Handcuffs", "Hazardous-goods(metal)",
-                "Hex-key(over-10cm)", "Hoe", "Homi", "Ice-skates", "Karambit", "Kettlebell",
-                "Knife-A", "Knife-B", "Knife-C", "Knife-D", "Knife-E", "Knife-F", "Knife-G",
-                "Knife-blade", "Knuckle", "Kubotan", "LAGs-products(Aluminum-B)", "LAGs-products(Aluminum-C)",
-                "LAGs-products(Aluminum-D)", "LAGs-products(Glass-A)", "LAGs-products(Glass-B)",
-                "LAGs-products(Glass-C)", "LAGs-products(Glass-D)", "LAGs-products(Paper-A)",
-                "LAGs-products(Paper-B)", "LAGs-products(Paper-D)", "LAGs-products(Plastic-A)",
-                "LAGs-products(Plastic-B)", "LAGs-products(Plastic-C)", "LAGs-products(Plastic-D)",
-                "LAGs-products(Stainless-B)", "LAGs-products(Stainless-C)", "LAGs-products(Stainless-D)",
-                "LAGs-products(Tube-C)", "LAGs-products(Tube-D)", "LAGs-products(Vinyl-A)",
-                "LAGs-products(Vinyl-B)", "LAGs-products(Vinyl-C)", "LAGs-products(Vinyl-D)",
-                "Lighter", "Long-nose-plier", "Matches", "Magazine", "Monkey-wrench", "Multipurpose-knife",
-                "Nipper", "Nunchaku", "Offset-wrench", "Pipe-wrench", "Pistol", "Podger-ratcheting-spanners",
-                "Rifle", "Saw", "Saw-blade", "Scissors-A", "Scissors-E", "Scissors-F",
-                "Self-defense-spray", "Shovel", "Shuriken-metal", "Sickle", "Slingshot",
-                "Smoke-grenade", "Solid-fuel", "Spanner", "Speargun-tip", "Straight-razor-folding",
-                "Surgical-knife", "Tent-stake", "Torch", "Torch-lighter", "Vise-plier", "Zipo-lighter"
+                "Arrow-tip", "Awl", "Ax", "Baton-folding", "Big-ball", "Billiard-ball", "Bolt-cutter"
             ],
             "정보저장매체": [
-                "CD", "Camcorder", "Camera", "Film", "Floppy-disk", "Folder-phone", "Hard-disk", "LP",
-                "Laptop", "SD-card", "Smart-phone", "Tablet-pc", "USB", "Video(Cassette)-tape"
+                "CD", "Camcorder", "Camera", "Film", "Floppy-disk", "Folder-phone", "Hard-disk", "LP"
             ]
         }
 
