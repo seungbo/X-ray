@@ -220,6 +220,10 @@ class Inference:
         if not isinstance(self.selected_ind, list): 
             self.selected_ind = list(self.selected_ind)
 
+    # Add this helper function to get FPS safely
+    def get_video_fps(self, cap):
+        return cap.get(cv2.CAP_PROP_FPS) if cap and cap.isOpened() else -1
+
     def inference(self):
         """Perform real-time object detection inference on video or webcam feed."""
 
@@ -335,6 +339,11 @@ class Inference:
                 self.st.error("Could not open video source.")
                 return
 
+            # Get original video FPS for playback control in video mode
+            original_fps = self.get_video_fps(cap) if self.source == "video" else -1
+            if self.source == "video" and original_fps <= 0:
+                 self.st.warning("Could not get video FPS. Playback speed may vary.")
+
             # 누적 카운트 초기화
             cumulative_counts = {'일반물품': 0, '위해물품': 0, '정보저장매체': 0}
             
@@ -364,6 +373,7 @@ class Inference:
             shared_data = DEFAULT_SHARED_DATA.copy()
 
             while True:
+                start_time = time.time() # Record start time
                 success, frame = cap.read()
                 if not success:
                     if self.source == "webcam":
@@ -490,6 +500,15 @@ class Inference:
 
                 self.org_frame.image(frame, channels="BGR")  # Display original frame
                 self.ann_frame.image(annotated_frame, channels="BGR")  # Display processed frame
+
+                # Calculate elapsed time and introduce delay to match original FPS in video mode
+                end_time = time.time()
+                elapsed_time = end_time - start_time
+                if self.source == "video" and original_fps > 0:
+                    target_frame_time = 1.0 / original_fps
+                    delay = target_frame_time - elapsed_time
+                    if delay > 0:
+                        time.sleep(delay)
 
 if __name__ == "__main__":
     import sys  # Import the sys module for accessing command-line arguments
