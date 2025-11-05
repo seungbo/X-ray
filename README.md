@@ -130,7 +130,6 @@ pip install --upgrade pip
 pip install streamlit
 pip install ultralytics
 
-3. 라이브러리 설치
 [윈도우(cmd)]
 python -m pip install --upgrade pip
 python -m pip install streamlit
