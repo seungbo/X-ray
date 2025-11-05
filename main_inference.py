@@ -33,7 +33,7 @@ class Inference:
         self.st = st  # Reference to the Streamlit module
         self.source = None  # Video source selection (webcam or video file)
         self.enable_trk = False  # Flag to toggle object tracking
-        self.conf = 0.40  # Confidence threshold for detection
+        self.conf = 0.6  # Confidence threshold for detection
         self.iou = 0.30  # Intersection-over-Union (IoU) threshold for non-maximum suppression
         self.org_frame = None  # Container for the original frame display
         self.ann_frame = None  # Container for the annotated frame display
@@ -194,14 +194,17 @@ class Inference:
             # -pose로 끝나는 모델이면 All Classes 옵션 제거
             if selected_model.lower().endswith("-pose"):
                 options = class_names
+                default_classes = []
             else:
                 options = [all_classes_option] + class_names
+                default_classes = [all_classes_option]  # 모델 선택 시 자동으로 All Classes 선택
         else:
             options = []
+            default_classes = []
         selected_classes = self.st.sidebar.multiselect(
             "객체 종류",
             options,
-            default=[],
+            default=default_classes,
             placeholder="Choose an option",
         )
         if selected_model:

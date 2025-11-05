@@ -108,12 +108,45 @@ train_results = model.train(
 
 ---
 
-## 사용 방법
-`pip install ultralytics streamlit torch lab`
+## 실행 방법
 
-
-## 웹 애플리케이션 실행 코드
 ```bash
-streamlit run streamlit_inference.py 
+1. 소스 가져오기
+git clone https://github.com/seungbo/X-ray
+cd X-ray
+
+2. 가상환경 설정
+[맥]
+python3 -m venv venv
+source venv/bin/activate
+
+[윈도우(cmd)]
+python -m venv venv
+venv\Scripts\activate
+
+3. 라이브러리 설치
+[맥]
+pip install --upgrade pip
+pip install streamlit
+pip install ultralytics
+
+3. 라이브러리 설치
+[윈도우(cmd)]
+python -m pip install --upgrade pip
+python -m pip install streamlit
+python -m pip install ultralytics
+# GPU 사용 시 아래 명령어 사용 - cuda 11.8 -> 호환성 확인 필요
+python -m pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu118
+
+
+4. 애플리케이션 실행
+[맥]
+streamlit run main_inference.py
+
+[윈도우(cmd)]
+python -m streamlit run main_inference.py
+
+5. 가상환경 비활성화
+deactivate
 ```
 ---
